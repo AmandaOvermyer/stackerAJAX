@@ -81,6 +81,52 @@ var getUnanswered = function(tags) {
 	});
 };
 
+var showtopAnswerers = function(item){
+	var result = $('.templates .topanswerers').clone();
+	var link = result.find('.user a');
+	link.attr('href', item.user.link);
+	link.text(item.user.display_name);
+
+	//var image = result.find('.user img');
+	//image.attr('src', item.user.profile_image);
+	var image = "<img src='" + item.user.profile_image + "'>";
+	result.find('.user').append(image);
+	result.find('.post-count').text(item.post_count);
+	result.find('.score').text(item.score);
+
+	return result;
+};
+
+
+var getTopAnswerers = function(tag) {
+
+	var request = { 
+		site:'stackoverflow',
+		order: 'desc',
+		sort: 'creation'
+	};
+	
+	$.ajax({
+		url: "http://api.stackexchange.com/2.2/tags/" + tag +"/top-answerers/all_time",
+		data: request,
+		dataType: "jsonp",
+		type: "GET",
+	})
+	.done(function(result){ 
+		//console.log(result);
+		var searchResults = showSearchResults(tag, result.items.length);
+
+		$('.search-results').html(searchResults);
+		$.each(result.items, function(i, item) {
+			var topAnswerers = showtopAnswerers(item);
+			$('.results').append(topAnswerers);
+		});
+	})
+	.fail(function(jqXHR, error){ 
+		var errorElem = showError(error);
+		$('.search-results').append(errorElem);
+	});
+};
 
 $(document).ready( function() {
 	$('.unanswered-getter').submit( function(e){
@@ -91,4 +137,12 @@ $(document).ready( function() {
 		var tags = $(this).find("input[name='tags']").val();
 		getUnanswered(tags);
 	});
+
+	$('.inspiration-getter').submit(function(e){
+		e.preventDefault();
+		$('.results').html('');
+		var tag = $(this).find("input[name='answerers']").val();
+		getTopAnswerers(tag);
+	})
 });
+
